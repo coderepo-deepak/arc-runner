@@ -1,0 +1,41 @@
+name: Deploy GitHub Runner to Kubernetes
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      ENV: dev
+      NAMESPACE: actions-runner-system
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+
+    - name: Load Kubeconfig
+      run: |
+        mkdir -p ~/.kube
+        echo "$KUBECONFIG_CONTENT" > ~/.kube/config
+      env:
+        KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG_CONTENT }}
+
+    - name: Create namespace
+      run: kubectl apply -f infra/base/namespace.yaml
+
+    - name: Install actions-runner-controller
+      run: |
+        helm repo add actions-runner-controller https://actions-runner-controller.github.io/actions-runner-controller
+        helm repo update
+        helm upgrade --install arc actions-runner-controller/actions-runner-controller \
+          --namespace $NAMESPACE \
+          --values infra/base/runner-controller-values.yaml \
+          --wait
+
+    - name: Deploy GitHub Runner (Kustomize overlay)
+      run: |
+        kubectl apply -k infra/overlays/${ENV}

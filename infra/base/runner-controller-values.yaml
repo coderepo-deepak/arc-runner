@@ -1,0 +1,8 @@
+githubWebhookServer:
+  enabled: false
+
+authSecret:
+  create: true
+  github_token: "${GH_PAT}" # Injected via secret replacement (optional)
+
+syncPeriod: 10m

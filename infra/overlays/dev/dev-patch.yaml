@@ -1,0 +1,10 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: sample-runner
+spec:
+  replicas: 2
+  template:
+    spec:
+      labels:
+        env: dev
